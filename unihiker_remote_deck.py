@@ -51,9 +51,14 @@ class Config:
     # UI Settings
     CORNER_RADIUS = 15
     BUTTON_HEIGHT = 70
-    BUTTON_HEIGHT = 70
     SPLASH_DURATION = 2.0  # seconds
     IDLE_TIMEOUT = 15.0 # seconds before screensaver activates
+    
+    # Animation Settings (Higher FPS)
+    TARGET_FPS = 60
+    FRAME_TIME = 1000 // TARGET_FPS  # 16ms for 60 FPS
+    IDLE_FPS = 30
+    IDLE_FRAME_TIME = 1000 // IDLE_FPS  # 33ms for 30 FPS
 
     
 
@@ -158,8 +163,8 @@ class SplashState(BaseState):
         if not self.animation_running:
             return
         
-        # Calculate step
-        step = 1.0 / (Config.SPLASH_DURATION * 30)  # ~30 FPS
+        # Calculate step for 60 FPS
+        step = 1.0 / (Config.SPLASH_DURATION * Config.TARGET_FPS)
         self.progress_value += step
         
         if self.progress_value >= 1.0:
@@ -175,7 +180,7 @@ class SplashState(BaseState):
             elif self.progress_value > 0.4:
                 self.status_label.configure(text="Loading components...")
             
-            self.after(33, self._animate_progress)  # ~30 FPS
+            self.after(Config.FRAME_TIME, self._animate_progress)  # 60 FPS
 
 
 # ============================================================================
@@ -286,7 +291,7 @@ class HandshakeState(BaseState):
         dots = "." * (self.dot_count + 1)
         self.dots_label.configure(text=dots.ljust(3))
         
-        self.after(400, self._animate_dots)
+        self.after(200, self._animate_dots)  # Faster dot animation
     
     def _start_connection_check(self):
         """Start background thread for connection check."""
@@ -820,9 +825,9 @@ class SpotifyState(BaseState):
         
         threading.Thread(target=fetch, daemon=True).start()
         
-        # Schedule next poll
+        # Schedule next poll - faster for smoother progress bar
         if self.update_running:
-            self.after(2000, self._poll_track_info)
+            self.after(1000, self._poll_track_info)  # Poll every 1 second
     
     def _update_ui(self, name, artist, duration_ms, position_s, is_playing):
         """Update UI with track info (called from main thread)."""
@@ -1036,8 +1041,8 @@ class RemoteDeckApp(ctk.CTk):
         
         self.current_idle_frame = (self.current_idle_frame + 1) % len(self.idle_frames)
         
-        # Schedule next frame (approx 15 FPS = 66ms)
-        self.after(66, self._animate_idle)
+        # Schedule next frame at 30 FPS for smoother idle animation
+        self.after(Config.IDLE_FRAME_TIME, self._animate_idle)
 
     def _stop_idle_mode(self):
         """Dismiss screensaver."""
