@@ -1,4 +1,4 @@
-# Unideck - Remote Control Deck
+# UniDeck - Remote Control Deck
 
 A remote control deck system using Unihiker M10 as a touch interface to control Mac applications and Spotify playback over WiFi.
 
